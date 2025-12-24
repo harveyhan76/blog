@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // AuthMiddleware JWT认证中间件
@@ -36,16 +35,17 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// 从数据库获取用户信息
-		db := c.MustGet("db").(*gorm.DB)
-		var user models.User
-		if err := db.First(&user, claims.UserID).Error; err != nil {
-			utils.Unauthorized(c, "User not found")
-			c.Abort()
-			return
-		}
+		// db := c.MustGet("db").(*gorm.DB)
+		// var user models.User
+		// if err := db.First(&user, claims.UserID).Error; err != nil {
+		// 	utils.Unauthorized(c, "User not found")
+		// 	c.Abort()
+		// 	return
+		// }
 
 		// 将用户信息存储到上下文
-		c.Set("user", user)
+		c.Set("user_id", claims.UserID)
+		c.Set("username", claims.Username)
 		c.Next()
 	}
 }

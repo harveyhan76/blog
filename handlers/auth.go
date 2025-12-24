@@ -117,7 +117,17 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 // GetProfile 获取用户信息
 func (h *AuthHandler) GetProfile(c *gin.Context) {
-	user := c.MustGet("user").(models.User)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.Unauthorized(c, "User not authenticated")
+		return
+	}
+
+	var user models.User
+	if err := h.db.First(&user, userID).Error; err != nil {
+		utils.NotFound(c, "User not found")
+		return
+	}
 
 	utils.Success(c, gin.H{
 		"id":         user.ID,

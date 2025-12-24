@@ -31,7 +31,11 @@ type UpdatePostRequest struct {
 
 // CreatePost 创建文章
 func (h *PostHandler) CreatePost(c *gin.Context) {
-	user := c.MustGet("user").(models.User)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.Unauthorized(c, "User not authenticated")
+		return
+	}
 
 	var req CreatePostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -42,7 +46,7 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	post := models.Post{
 		Title:   req.Title,
 		Content: req.Content,
-		UserID:  user.ID,
+		UserID:  userID.(uint),
 	}
 
 	if err := h.db.Create(&post).Error; err != nil {
@@ -135,7 +139,11 @@ func (h *PostHandler) GetPost(c *gin.Context) {
 
 // UpdatePost 更新文章
 func (h *PostHandler) UpdatePost(c *gin.Context) {
-	user := c.MustGet("user").(models.User)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.Unauthorized(c, "User not authenticated")
+		return
+	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		utils.BadRequest(c, "Invalid post ID")
@@ -153,7 +161,7 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 	}
 
 	// 检查权限
-	if post.UserID != user.ID {
+	if post.UserID != userID {
 		utils.Forbidden(c, "You can only update your own posts")
 		return
 	}
@@ -182,7 +190,11 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 
 // DeletePost 删除文章
 func (h *PostHandler) DeletePost(c *gin.Context) {
-	user := c.MustGet("user").(models.User)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.Unauthorized(c, "User not authenticated")
+		return
+	}
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		utils.BadRequest(c, "Invalid post ID")
@@ -200,7 +212,7 @@ func (h *PostHandler) DeletePost(c *gin.Context) {
 	}
 
 	// 检查权限
-	if post.UserID != user.ID {
+	if post.UserID != userID {
 		utils.Forbidden(c, "You can only delete your own posts")
 		return
 	}

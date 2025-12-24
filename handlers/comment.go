@@ -24,7 +24,11 @@ type CreateCommentRequest struct {
 
 // CreateComment 创建评论
 func (h *CommentHandler) CreateComment(c *gin.Context) {
-	user := c.MustGet("user").(models.User)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.Unauthorized(c, "User not authenticated")
+		return
+	}
 
 	postID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -51,7 +55,7 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 
 	comment := models.Comment{
 		Content: req.Content,
-		UserID:  user.ID,
+		UserID:  userID.(uint),
 		PostID:  uint(postID),
 	}
 
@@ -112,7 +116,11 @@ func (h *CommentHandler) GetComments(c *gin.Context) {
 
 // DeleteComment 删除评论
 func (h *CommentHandler) DeleteComment(c *gin.Context) {
-	user := c.MustGet("user").(models.User)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.Unauthorized(c, "User not authenticated")
+		return
+	}
 	commentID, err := strconv.Atoi(c.Param("commentId"))
 	if err != nil {
 		utils.BadRequest(c, "Invalid comment ID")
@@ -130,7 +138,7 @@ func (h *CommentHandler) DeleteComment(c *gin.Context) {
 	}
 
 	// 检查权限：只能删除自己的评论
-	if comment.UserID != user.ID {
+	if comment.UserID != userID {
 		utils.Forbidden(c, "You can only delete your own comments")
 		return
 	}
